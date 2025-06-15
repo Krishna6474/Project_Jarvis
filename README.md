@@ -38,14 +38,14 @@ JARVIS is built with a modular, agentic architecture that enables flexible, cont
 
 - Python 3.8+
 - Node.js (optional, for frontend development)
-- API keys for [Google Gemini](https://ai.google.dev/) and [Groq](https://console.groq.com/)
+- API keys for [Google Gemini](https://aistudio.google.com/apikey) and [Groq](https://console.groq.com/keys)
 
 ## Setup
 
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/gamkers/Project_Jarvis.git
+   git clone <your-repo-url>
    cd Jarvis_Project
    ```
 
@@ -56,6 +56,9 @@ JARVIS is built with a modular, agentic architecture that enables flexible, cont
    ```
 
 3. **Set API Keys**
+
+   - Get your Gemini API key here: [https://aistudio.google.com/apikey](https://aistudio.google.com/apikey)
+   - Get your Groq API key here: [https://console.groq.com/keys](https://console.groq.com/keys)
 
    Export your API keys as environment variables:
 

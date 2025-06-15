@@ -12,7 +12,6 @@ langchain
 langchain_groq
 pyaudio
 schedule
-threading
 pydub
 # Optional: for web UI development
 # nodejs

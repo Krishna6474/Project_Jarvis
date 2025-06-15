@@ -12,6 +12,28 @@ JARVIS is an advanced AI assistant that combines voice and text interfaces, task
 - **Voice Mode**: Wake-word detection and continuous listening (desktop only).
 - **Agentic Reasoning**: Uses LangChain agents for advanced task handling.
 
+## Architecture
+
+JARVIS is built with a modular, agentic architecture that enables flexible, context-aware, and extensible AI assistance:
+
+- **LLM Backbone**: Uses Google Gemini and Groq Llama3 models for natural language understanding and generation.
+- **LangChain Agents & Tools**: The assistant leverages [LangChain](https://python.langchain.com/) agents, which can invoke a set of "tools" (functions) for structured operations such as task management, reminders, and context retrieval. This enables the AI to reason and act, not just chat.
+- **Vector Database (FAISS)**: All conversations and knowledge snippets are embedded using Sentence Transformers and stored in a FAISS vector database. This allows for fast semantic search and retrieval of relevant context for every user query.
+- **Knowledge Base**: The assistant builds a knowledge base from user interactions, storing conversation history, tasks, reminders, and extracted user preferences/topics. This knowledge base is used to personalize responses and provide continuity.
+- **Web & Voice Interface**: The backend is a Flask server exposing REST APIs, while the frontend is a modern HTML/JS UI supporting both text and voice input/output.
+- **Background Services**: Reminders and scheduled tasks are managed in background threads, ensuring timely alerts and persistent memory.
+
+**High-Level Flow:**
+
+1. **User Input** (text/voice) → 
+2. **Frontend** (Web UI) → 
+3. **Flask Backend** → 
+4. **Agent Decision** (LLM + LangChain tools) → 
+5. **Tool Execution** (task/reminder/search/context) → 
+6. **LLM Response Generation** (with context from vector DB & knowledge base) → 
+7. **Frontend Output** (text/voice) → 
+8. **Data Storage** (Excel, Pickle, FAISS)
+
 ## Requirements
 
 - Python 3.8+
@@ -67,7 +89,7 @@ JARVIS is an advanced AI assistant that combines voice and text interfaces, task
 ```
 Jarvis_Project/
 ├── app.py                # Flask backend server
-├── jarvis_ai.py          # Main Jarvis AI logic
+├── jarvis_ai.py          # Main Jarvis AI logic (agents, tools, vector DB, etc.)
 ├── requirements.txt      # Python dependencies
 ├── static/               # Frontend static files (HTML, CSS, JS)
 ├── jarvis_data/          # Data storage (created at runtime)

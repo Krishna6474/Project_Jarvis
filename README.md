@@ -164,6 +164,7 @@ The Jarvis AI Assistant is a sophisticated, multi-modal AI system that combines 
 │  └─────────────┘ └─────────────┘ └─────────────┘              │
 └─────────────────────────────────────────────────────────────────┘
 ```
+<img width="5627" height="3925" alt="image" src="https://github.com/user-attachments/assets/29aa8c32-e43f-4325-8c82-dbcf6ea42f27" />
 
 ## Architecture Patterns
 

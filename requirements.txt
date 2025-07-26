@@ -13,5 +13,4 @@ langchain_groq
 pyaudio
 schedule
 pydub
-# Optional: for web UI development
-# nodejs
+pyserial

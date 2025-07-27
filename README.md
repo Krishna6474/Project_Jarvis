@@ -71,6 +71,11 @@ JARVIS is built with a modular, agentic architecture that enables flexible, cont
 
 4. **Run the Backend**
 
+   **Standalone Mode**
+   ```bash
+   python jarvis_ai.py
+   ```
+   **API Mode**
    ```bash
    python app.py
    ```

@@ -1,9 +1,8 @@
 import os
-import json
 import datetime
 import pandas as pd
 import numpy as np
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Hashable
 import speech_recognition as sr
 import pyttsx3
 import google.generativeai as genai
@@ -18,10 +17,6 @@ import logging
 from langchain.agents import Tool, AgentExecutor, create_react_agent
 from langchain import hub
 from langchain_groq import ChatGroq
-import pyaudio
-import wave
-import audioop
-import subprocess
 import platform
 import sys
 import serial
@@ -375,17 +370,17 @@ class JarvisAI:
         tasks = self.get_tasks()
         if not tasks:
             return "No tasks found."
+    def agent_list_tasks(self, _: str = "") -> str:
+        """Agent tool to list all tasks with details"""
+        tasks = self.get_tasks()
+        if not tasks:
+            return "No tasks found."
         task_list = []
         for task in tasks:
             task_list.append(
                 f"ID: {task['id']} - {task['description']} (Status: {task['status']}, Due: {task.get('due_date','')}, Priority: {task.get('priority','')})"
             )
         return "\n".join(task_list)
-
-    
-    def agent_update_task(self, input_string: str) -> str:
-        """Agent tool to update task status"""
-        parts = input_string.split(',')
         if len(parts) != 2:
             return "Invalid input. Please provide task_id,new_status"
         
@@ -411,17 +406,17 @@ class JarvisAI:
         active_reminders = [r for r in self.reminders if r['status'] == 'active']
         if not active_reminders:
             return "No active reminders found."
+    def agent_get_reminders(self, _: str = "") -> str:
+        """Agent tool to get reminders"""
+        active_reminders = [r for r in self.reminders if r['status'] == 'active']
+        if not active_reminders:
+            return "No active reminders found."
         
         reminder_list = []
         for reminder in active_reminders:
             reminder_list.append(f"ID: {reminder['id']} - {reminder['text']} at {reminder['time']}")
         
         return "\n".join(reminder_list)
-    
-    def agent_search_conversations(self, query: str) -> str:
-        """Agent tool to search conversations"""
-        results = self.search_vector_db(query, k=3)
-        if not results:
             return "No relevant conversations found."
         
         context = "Previous conversations:\n"
@@ -435,40 +430,45 @@ class JarvisAI:
         if not self._ensure_marauder():
             return "Unable to connect to Marauder device."
             
+    def agent_stop_wifi_testing(self, _: str = "") -> str:
+        """Stop any ongoing WiFi testing/attacks"""
+        if not self._ensure_marauder():
+            return "Unable to connect to Marauder device."
+            
         try:
-            self.marauder_controller.stop_attack()
-            return "WiFi testing/attack has been stopped."
+            if self.marauder_controller is not None:
+                self.marauder_controller.stop_attack()
+                return "WiFi testing/attack has been stopped."
+            else:
+                return "Marauder controller is not initialized."
         except Exception as e:
-            logger.error(f"Error stopping WiFi test: {e}")
-            return "Failed to stop WiFi testing due to an error."
-
-    def agent_flood_wifi(self, input_string: str = "") -> str:
+    def agent_flood_wifi(self, _: str = "") -> str:
         """Execute a WiFi beacon flood attack"""
         if not self._ensure_marauder():
             return "Unable to connect to Marauder device."
         try:
-            self.speak("Starting WiFi beacon flood attack")
-            self.marauder_controller.send_cmd("attack -t beacon -r 10")
-            return "WiFi beacon flood attack started. Use stop_wifi_testing to stop the attack."
+            if self.marauder_controller is not None:
+                self.speak("Starting WiFi beacon flood attack")
+                self.marauder_controller.send_cmd("attack -t beacon -r 10")
+                return "WiFi beacon flood attack started. Use stop_wifi_testing to stop the attack."
+            else:
+                return "Marauder controller is not initialized."
         except Exception as e:
-            logger.error(f"Error starting beacon flood: {e}")
-        return "Failed to start WiFi beacon flood attack due to an error."
-    
-    def agent_flood_bt(self, input_string: str = "") -> str:
+    def agent_flood_bt(self, _: str = "") -> str:
         """Execute a WiFi beacon flood attack"""
         print("Starting Bluetooth flood attack")
         if not self._ensure_marauder():
             return "Unable to connect to Marauder device."
         try:
-            self.speak("Starting bluetooth spam attack")
-            self.marauder_controller.send_cmd("blespam -t all")
-            return "bluetooth spam attack started. Use stop_wifi_testing to stop the attack."
+            if self.marauder_controller is not None:
+                self.speak("Starting bluetooth spam attack")
+                self.marauder_controller.send_cmd("blespam -t all")
+                return "bluetooth spam attack started. Use stop_wifi_testing to stop the attack."
+            else:
+                return "Marauder controller is not initialized."
         except Exception as e:
             logger.error(f"Error starting beacon flood: {e}")
-        return "Failed to start bluetooth spam attack due to an error."
-
-    
-    def agent_get_user_context(self, input_string: str = "") -> str:
+    def agent_get_user_context(self, _: str = "") -> str:
         """Agent tool to get user context"""
         frequent_topics = sorted(self.user_context['frequent_topics'].items(), 
                                key=lambda x: x[1], reverse=True)[:5]
@@ -478,11 +478,13 @@ class JarvisAI:
         context += f"Recent conversations: {len(self.user_context['conversation_history'])}"
         
         return context
-    
-    # --- Combined WiFi attack tool ---
-    def agent_attack_wifi_network(self, input_string: str = "") -> str:
+        context += f"Top topics: {[topic[0] for topic in frequent_topics]}\n"
+        context += f"Recent conversations: {len(self.user_context['conversation_history'])}"
+    def agent_attack_wifi_network(self, _: str = "") -> str:
         if not self._ensure_marauder():
             return "Unable to connect to Marauder device."
+        if self.marauder_controller is None:
+            return "Marauder controller is not initialized."
         ssids = self.marauder_controller.scan_wifi()
         if not ssids:
             return "No WiFi networks found."
@@ -502,6 +504,10 @@ class JarvisAI:
                     self.speak("Invalid index. Please try again.")
             else:
                 self.speak("No input received. Please try again.")
+        if idx is None or idx < 0 or idx >= len(ssids):
+            return "Failed to get a valid WiFi index. Aborting attack."
+        self.marauder_controller.deauth(idx)
+        return f"Deauth attack started on WiFi network {idx}: {ssids[idx].strip()}"
         if idx is None or idx < 0 or idx >= len(ssids):
             return "Failed to get a valid WiFi index. Aborting attack."
         self.marauder_controller.deauth(idx)
@@ -804,17 +810,11 @@ class JarvisAI:
         if len(self.user_context['conversation_history']) > 50:
             self.user_context['conversation_history'] = self.user_context['conversation_history'][-50:]
         
-        # Extract and update frequent topics
-        words = user_input.lower().split()
-        for word in words:
-            if len(word) > 3:
-                self.user_context['frequent_topics'][word] = self.user_context['frequent_topics'].get(word, 0) + 1
-    
-    def add_task(self, task_description: str, due_date: str = None, priority: str = "medium"):
+    def add_task(self, task_description: str, due_date: Optional[str] = None, priority: str = "medium"):
         """Add a new task with id, status, etc."""
         next_id = max([t['id'] for t in self.tasks], default=0) + 1
         # PATCH: Store due_date as string if present, else empty string
-        task = {
+        task: Dict[Hashable, Any] = {
             'id': next_id,
             'description': task_description,
             'due_date': due_date if due_date else "",
@@ -825,9 +825,15 @@ class JarvisAI:
         self.tasks.append(task)
         self.save_data()
         return f"Task added: {task_description}{', ' + due_date if due_date else ''}"
-
-    def get_tasks(self, status: str = None):
+            'status': 'pending',
+    def get_tasks(self, status: Optional[str] = None):
         """Return all tasks as a list of dicts, optionally filtered by status"""
+        # PATCH: Always return a list of dicts, never None or string
+        if not isinstance(self.tasks, list):
+            self.tasks = []
+        if status:
+            return [task for task in self.tasks if task.get('status') == status]
+        return list(self.tasks)
         # PATCH: Always return a list of dicts, never None or string
         if not isinstance(self.tasks, list):
             self.tasks = []
@@ -847,7 +853,7 @@ class JarvisAI:
     
     def add_reminder(self, reminder_text: str, reminder_time: str):
         """Add a new reminder"""
-        reminder = {
+        reminder: Dict[Hashable, Any] = {
             'id': len(self.reminders) + 1,
             'text': reminder_text,
             'time': reminder_time,
